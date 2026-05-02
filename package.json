@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-sheet-free",
+  "name": "obsidian-excel",
   "version": "26.5.1",
   "description": "Free Excel-like spreadsheet plugin for Obsidian with xlsx import/export, based on Univer",
   "main": "main.js",

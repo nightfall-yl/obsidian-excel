@@ -16,7 +16,7 @@ function copyBuildOutput() {
       const outDir = resolve(__dirname, 'dist');
       await writeFile(resolve(outDir, 'manifest.json'), `${JSON.stringify({
         id: pkg.name,
-        name: 'Sheet Free',
+        name: 'Excel',
         version: pkg.version,
         minAppVersion: '0.15.0',
         description: pkg.description,
