@@ -1,0 +1,9 @@
+{
+  "id": "obsidian-sheet-free",
+  "name": "Sheet Free",
+  "version": "26.5.1",
+  "minAppVersion": "0.15.0",
+  "description": "Free Excel-like spreadsheet plugin for Obsidian with xlsx import/export, based on Univer",
+  "author": "nightfall_yl",
+  "isDesktopOnly": false
+}
