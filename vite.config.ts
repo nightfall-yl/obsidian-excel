@@ -27,6 +27,13 @@ function copyBuildOutput() {
     async closeBundle() {
       const outDir = resolve(__dirname, 'dist');
       const rootDir = resolve(__dirname);
+      const PROCESS_POLYFILL = 'if(typeof window!=="undefined"&&typeof window.process==="undefined"){window.process={env:{NODE_ENV:"production"}};};';
+      try {
+        const mainJs = await readFile(resolve(outDir, 'main.js'), 'utf-8');
+        if (!mainJs.startsWith(PROCESS_POLYFILL)) {
+          await writeFile(resolve(outDir, 'main.js'), PROCESS_POLYFILL + '\n' + mainJs);
+        }
+      } catch (e) { /* ignore */ }
       try {
         await copyFile(resolve(outDir, 'main.js'), join(rootDir, 'main.js'));
       } catch (e) { /* ignore */ }
@@ -83,7 +90,7 @@ export default defineConfig(() => {
       },
       emptyOutDir: !dev,
       sourcemap: dev ? 'inline' : false,
-      target: 'ESNext',
+      target: ['es2020', 'safari14'],
       rollupOptions: {
         output: {
           globals: {

@@ -17,20 +17,18 @@ import { FUniver } from '@univerjs/core/facade';
 import { defaultTheme } from '@univerjs/themes';
 import { MockAuthzService } from './MockAuthzService';
 import type { App } from 'obsidian';
+import { Platform } from 'obsidian';
 
 import { UniverDocsPlugin } from '@univerjs/docs';
 import { UniverDocsUIPlugin } from '@univerjs/docs-ui';
 import { UniverRenderEnginePlugin } from '@univerjs/engine-render';
 import { UniverSheetsPlugin } from '@univerjs/sheets';
-import { UniverSheetsUIPlugin } from '@univerjs/sheets-ui';
 import { UniverFormulaEnginePlugin } from '@univerjs/engine-formula';
 import { CalculationMode, UniverSheetsFormulaPlugin } from '@univerjs/sheets-formula';
 import { UniverSheetsFormulaUIPlugin } from '@univerjs/sheets-formula-ui';
 import { UniverSheetsNumfmtPlugin } from '@univerjs/sheets-numfmt';
 import { UniverSheetsNumfmtUIPlugin } from '@univerjs/sheets-numfmt-ui';
-import { UniverUIPlugin } from '@univerjs/ui';
 import { UniverSheetsFilterPlugin } from '@univerjs/sheets-filter';
-import { UniverSheetsFilterUIPlugin } from '@univerjs/sheets-filter-ui';
 import { UniverSheetsSortPlugin } from '@univerjs/sheets-sort';
 import { UniverSheetsSortUIPlugin } from '@univerjs/sheets-sort-ui';
 import { UniverFindReplacePlugin } from '@univerjs/find-replace';
@@ -42,6 +40,8 @@ import { UniverSheetsHyperLinkPlugin } from '@univerjs/sheets-hyper-link';
 import { UniverSheetsHyperLinkUIPlugin } from '@univerjs/sheets-hyper-link-ui';
 import { UniverSheetsNotePlugin } from '@univerjs/sheets-note';
 import { UniverSheetsNoteUIPlugin } from '@univerjs/sheets-note-ui';
+import { UniverMobileUIPlugin, UniverUIPlugin } from '@univerjs/ui';
+import { UniverSheetsMobileUIPlugin, UniverSheetsUIPlugin } from '@univerjs/sheets-ui';
 
 import '@univerjs/sheets/facade';
 import '@univerjs/ui/facade';
@@ -158,8 +158,10 @@ export function createUniverInstance(
   container: string | HTMLElement,
   darkMode: boolean = false,
   app?: App,
+  mobilePreviewMode: boolean = false,
 ) {
   const obsidianLocale = getObsidianLocale();
+  const isMobile = !Platform.isDesktopApp;
 
   const univer = new Univer({
     theme: defaultTheme,
@@ -182,6 +184,21 @@ export function createUniverInstance(
     name: 'Obsidian User',
   });
 
+  if (isMobile) {
+    if (mobilePreviewMode) {
+      registerMobilePreviewPlugins(univer, container);
+    } else {
+      registerMobileEditPlugins(univer, container);
+    }
+  } else {
+    registerDesktopPlugins(univer, container, app);
+  }
+
+  const univerAPI = FUniver.newAPI(univer);
+  return { univerAPI, univer };
+}
+
+function registerDesktopPlugins(univer: Univer, container: string | HTMLElement, app?: App) {
   univer.registerPlugin(UniverDocsPlugin);
   univer.registerPlugin(UniverRenderEnginePlugin);
   univer.registerPlugin(UniverUIPlugin, {
@@ -203,7 +220,6 @@ export function createUniverInstance(
   univer.registerPlugin(UniverSheetsFormulaUIPlugin);
   univer.registerPlugin(UniverFindReplacePlugin);
   univer.registerPlugin(UniverSheetsFilterPlugin);
-  univer.registerPlugin(UniverSheetsFilterUIPlugin);
   univer.registerPlugin(UniverSheetsSortPlugin);
   univer.registerPlugin(UniverSheetsSortUIPlugin);
   univer.registerPlugin(UniverThreadCommentPlugin);
@@ -225,7 +241,55 @@ export function createUniverInstance(
   });
   univer.registerPlugin(UniverSheetsNotePlugin);
   univer.registerPlugin(UniverSheetsNoteUIPlugin);
-  const univerAPI = FUniver.newAPI(univer);
+}
 
-  return { univerAPI, univer };
+function registerMobilePreviewPlugins(univer: Univer, container: string | HTMLElement) {
+  univer.registerPlugin(UniverDocsPlugin);
+  univer.registerPlugin(UniverRenderEnginePlugin);
+  univer.registerPlugin(UniverMobileUIPlugin, {
+    container,
+    contextMenu: false,
+    header: false,
+    footer: false,
+    toolbar: false,
+  });
+  univer.registerPlugin(UniverDocsUIPlugin);
+  univer.registerPlugin(UniverSheetsPlugin);
+  univer.registerPlugin(UniverSheetsMobileUIPlugin);
+  univer.registerPlugin(UniverSheetsFilterPlugin);
+  univer.registerPlugin(UniverSheetsNumfmtPlugin);
+  univer.registerPlugin(UniverFormulaEnginePlugin);
+  univer.registerPlugin(UniverSheetsFormulaPlugin, {
+    initialFormulaComputing: CalculationMode.FORCED,
+  });
+}
+
+function registerMobileEditPlugins(univer: Univer, container: string | HTMLElement) {
+  univer.registerPlugin(UniverDocsPlugin);
+  univer.registerPlugin(UniverRenderEnginePlugin);
+  univer.registerPlugin(UniverMobileUIPlugin, {
+    container,
+    contextMenu: true,
+    header: true,
+    footer: true,
+    toolbar: true,
+    disableAutoFocus: false,
+  });
+  univer.registerPlugin(UniverDocsUIPlugin);
+  univer.registerPlugin(UniverSheetsPlugin);
+  univer.registerPlugin(UniverSheetsMobileUIPlugin, {
+    disableAutoFocus: false,
+  });
+  univer.registerPlugin(UniverSheetsFilterPlugin);
+  univer.registerPlugin(UniverSheetsNumfmtPlugin);
+  univer.registerPlugin(UniverSheetsNumfmtUIPlugin);
+  univer.registerPlugin(UniverFormulaEnginePlugin);
+  univer.registerPlugin(UniverSheetsFormulaPlugin, {
+    initialFormulaComputing: CalculationMode.FORCED,
+  });
+  univer.registerPlugin(UniverSheetsFormulaUIPlugin);
+  univer.registerPlugin(UniverSheetsHyperLinkPlugin);
+  univer.registerPlugin(UniverSheetsHyperLinkUIPlugin);
+  univer.registerPlugin(UniverSheetsNotePlugin);
+  univer.registerPlugin(UniverSheetsNoteUIPlugin);
 }

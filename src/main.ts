@@ -13,45 +13,57 @@ import { SheetView } from './SheetView';
 import { t } from './i18n';
 import { setObsidianApp } from './ImportExportPlugin';
 import { registerEmbedLinkProcessor } from './embed-link-processor';
+import './custom.css';
 
 const SHEET_FILE_EXT = 'sheet';
 
 export default class SheetFreePlugin extends Plugin {
   async onload() {
-    setObsidianApp(this.app);
+    try {
+      setObsidianApp(this.app);
 
-    this.registerView(VIEW_TYPE_SHEET, (leaf: WorkspaceLeaf) => new SheetView(leaf));
-    this.registerExtensions([SHEET_FILE_EXT], VIEW_TYPE_SHEET);
+      this.registerView(VIEW_TYPE_SHEET, (leaf: WorkspaceLeaf) => new SheetView(leaf));
+      this.registerExtensions([SHEET_FILE_EXT], VIEW_TYPE_SHEET);
 
-    this.addRibbonIcon('sheet', t('CREATE_SHEET'), () => {
-      this.createAndOpenSheet('/');
-    });
-
-    this.addCommand({
-      id: 'create-sheet',
-      name: t('CREATE_SHEET'),
-      callback: () => {
+      this.addRibbonIcon('sheet', t('CREATE_SHEET'), () => {
         this.createAndOpenSheet('/');
-      },
-    });
+      });
 
-    this.registerEvent(
-      this.app.workspace.on('file-menu', (menu, file) => {
-        menu.addItem((item) => {
-          item
-            .setTitle(t('CREATE_SHEET'))
-            .setIcon('sheet')
-            .onClick(() => {
-              const folder = file instanceof TFolder ? file.path : file.parent?.path || '/';
-              this.createAndOpenSheet(folder);
-            });
-        });
-      }),
-    );
+      this.addCommand({
+        id: 'create-sheet',
+        name: t('CREATE_SHEET'),
+        callback: () => {
+          this.createAndOpenSheet('/');
+        },
+      });
 
-    this.registerMonkeyPatches();
-    this.switchToSheetAfterLoad();
-    registerEmbedLinkProcessor(this);
+      this.registerEvent(
+        this.app.workspace.on('file-menu', (menu, file) => {
+          menu.addItem((item) => {
+            item
+              .setTitle(t('CREATE_SHEET'))
+              .setIcon('sheet')
+              .onClick(() => {
+                const folder = file instanceof TFolder ? file.path : file.parent?.path || '/';
+                this.createAndOpenSheet(folder);
+              });
+          });
+        }),
+      );
+
+      this.registerMonkeyPatches();
+      this.switchToSheetAfterLoad();
+      registerEmbedLinkProcessor(this);
+    } catch (e) {
+      const errStr = e instanceof Error ? `${e.message}\n${e.stack || ''}` : String(e);
+      console.error('[obsidian-excel] onload error:', errStr);
+      try {
+        await this.app.vault.adapter.write(
+          'excel-error-log.txt',
+          `[${new Date().toISOString()}]\n${errStr}`
+        );
+      } catch { /* ignore */ }
+    }
   }
 
   onunload() {

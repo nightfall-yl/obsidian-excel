@@ -38,8 +38,12 @@ export class MockAuthzService implements IAuthzIoService {
     return [];
   }
 
-  async allowed(_config: IAllowedRequest): Promise<IActionInfo[]> {
-    return [];
+  async allowed(config: IAllowedRequest): Promise<IActionInfo[]> {
+    return config.actions.map(action => ({
+      action,
+      allowed: true,
+      reasons: [],
+    }));
   }
 
   async listRoles(): Promise<{ roles: IUnitRoleKV[]; actions: UnitAction[] }> {

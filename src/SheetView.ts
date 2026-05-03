@@ -2,7 +2,7 @@ import type { FUniver } from '@univerjs/core/facade';
 import type { IWorkbookData, Univer } from '@univerjs/core';
 import { CommandType, LifecycleStages } from '@univerjs/core';
 import type { TFile, WorkspaceLeaf } from 'obsidian';
-import { TextFileView, debounce, Notice } from 'obsidian';
+import { Platform, TextFileView, debounce, Notice, setIcon } from 'obsidian';
 import { createUniverInstance } from './setup-univer';
 import { parseSheetFile, workbookDataToMarkdown, createBlankSheetData } from './data-utils';
 import { BLANK_CONTENT, VIEW_TYPE_SHEET } from './constants';
@@ -16,6 +16,9 @@ export class SheetView extends TextFileView {
   private sheetContainerEl: HTMLElement | null = null;
   private isSaving = false;
   private disposeImportExport: (() => void) | null = null;
+  private isMobilePreviewMode = true;
+  private modeToggleAction: HTMLElement | undefined;
+  private currentSheetId: string | null = null;
 
   constructor(leaf: WorkspaceLeaf) {
     super(leaf);
@@ -50,6 +53,14 @@ export class SheetView extends TextFileView {
 
   onload(): void {
     super.onload();
+
+    if (!Platform.isDesktopApp) {
+      this.modeToggleAction = this.addAction(
+        'book-open',
+        'Toggle mode',
+        () => this.toggleMobileMode()
+      );
+    }
   }
 
   clear(): void {
@@ -89,18 +100,32 @@ export class SheetView extends TextFileView {
     await this.save();
   }, 5000);
 
-  private renderUniver(workbookData: IWorkbookData): void {
+  private renderUniver(workbookData: IWorkbookData, mobilePreviewMode?: boolean): void {
     this.disposeUniver();
 
     this.contentEl.style.padding = '0';
     this.contentEl.empty();
 
+    const isMobile = !Platform.isDesktopApp;
+    
+    if (mobilePreviewMode !== undefined) {
+      this.isMobilePreviewMode = mobilePreviewMode;
+    }
+
     this.sheetContainerEl = this.contentEl.createDiv({ cls: 'sheet-free-container' });
     this.sheetContainerEl.style.width = '100%';
     this.sheetContainerEl.style.height = '100%';
 
+    if (isMobile) {
+      if (this.isMobilePreviewMode) {
+        this.sheetContainerEl.addClass('sheet-free-mobile-preview');
+      } else {
+        this.sheetContainerEl.addClass('sheet-free-mobile-edit');
+      }
+    }
+
     const isDark = this.app.isDarkMode();
-    const { univerAPI, univer } = createUniverInstance(this.sheetContainerEl, isDark, this.app);
+    const { univerAPI, univer } = createUniverInstance(this.sheetContainerEl, isDark, this.app, this.isMobilePreviewMode);
     this.univerAPI = univerAPI;
     this.univer = univer;
 
@@ -108,10 +133,59 @@ export class SheetView extends TextFileView {
 
     univerAPI.addEvent(univerAPI.Event.LifeCycleChanged, (res: any) => {
       if (res.stage === LifecycleStages.Rendered) {
-        this.setupDataSync();
+        if (!isMobile) {
+          this.setupDataSync();
+        } else if (!this.isMobilePreviewMode) {
+          this.setupDataSync();
+        }
         this.setupImportExportFeature();
+        if (isMobile) {
+          this.setupMobileUI();
+        }
       }
     });
+  }
+
+  private setupMobileUI(): void {
+    if (!this.univerAPI || !this.sheetContainerEl) return;
+
+    if (this.currentSheetId) {
+      const activeWorkbook = this.univerAPI.getActiveWorkbook();
+      if (activeWorkbook) {
+        activeWorkbook.setActiveSheet(this.currentSheetId);
+      }
+    }
+
+    if (this.isMobilePreviewMode) {
+      const activeWorkbook = this.univerAPI.getActiveWorkbook();
+      if (activeWorkbook) {
+        const permission = activeWorkbook.getWorkbookPermission();
+        permission.setReadOnly();
+        this.univerAPI.setPermissionDialogVisible(false);
+      }
+    }
+  }
+
+  private toggleMobileMode(): void {
+    if (!this.lastWorkbookData) return;
+
+    if (this.univerAPI) {
+      const activeWorkbook = this.univerAPI.getActiveWorkbook();
+      if (activeWorkbook) {
+        const activeSheet = activeWorkbook.getActiveSheet();
+        if (activeSheet) {
+          this.currentSheetId = activeSheet.getSheetId();
+        }
+      }
+    }
+
+    this.isMobilePreviewMode = !this.isMobilePreviewMode;
+    
+    if (this.modeToggleAction) {
+      setIcon(this.modeToggleAction, this.isMobilePreviewMode ? 'book-open' : 'pencil');
+    }
+    
+    this.renderUniver(this.lastWorkbookData, this.isMobilePreviewMode);
   }
 
   private setupDataSync(): void {
@@ -173,7 +247,6 @@ export class SheetView extends TextFileView {
       try {
         this.disposeImportExport();
       } catch (e) {
-        // ignore
       }
       this.disposeImportExport = null;
     }
@@ -186,7 +259,6 @@ export class SheetView extends TextFileView {
         }
         this.univerAPI.dispose();
       } catch (e) {
-        // ignore
       }
       this.univerAPI = null;
     }
@@ -194,7 +266,6 @@ export class SheetView extends TextFileView {
       try {
         this.univer.dispose();
       } catch (e) {
-        // ignore
       }
       this.univer = null;
     }

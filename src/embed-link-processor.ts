@@ -191,7 +191,7 @@ function resolveSheetFile(src: string, plugin: Plugin): TFile | null {
   const mdFile = plugin.app.vault.getAbstractFileByPath(mdPath);
   if (mdFile instanceof TFile) {
     const cache = plugin.app.metadataCache.getFileCache(mdFile);
-    if (cache?.frontmatter && cache.frontmatter['sheet-free-plugin']) {
+    if (cache?.frontmatter && cache.frontmatter['obsidian-excel']) {
       return mdFile;
     }
   }

@@ -203,21 +203,60 @@ function showOutgoingLinkModal(univerAPI: FUniver, app: App): void {
   if (!selection) return;
 
   const files = app.vault.getFiles();
-  const container = document.body.createDiv({ cls: 'sheet-free-outgoing-link-modal-overlay' });
 
-  const modal = container.createDiv({ cls: 'sheet-free-outgoing-link-modal' });
-  const header = modal.createDiv({ cls: 'sheet-free-outgoing-link-modal-header' });
-  header.createEl('h3', { text: '添加内链' });
-  const closeBtn = header.createEl('button', { text: '✕', cls: 'sheet-free-outgoing-link-close' });
+  const S = (el: HTMLElement, styles: Record<string, string>) => { Object.assign(el.style, styles); return el; };
 
-  const searchBox = modal.createDiv({ cls: 'sheet-free-outgoing-link-search' });
-  const input = searchBox.createEl('input', {
-    type: 'text',
-    placeholder: '搜索笔记...',
-    cls: 'sheet-free-outgoing-link-input',
+  const container = S(document.createElement('div'), {
+    position: 'fixed', inset: '0',
+    background: 'rgba(0,0,0,0.3)',
+    zIndex: '99999',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
   });
+  document.body.appendChild(container);
 
-  const listEl = modal.createDiv({ cls: 'sheet-free-outgoing-link-list' });
+  const modal = S(document.createElement('div'), {
+    background: 'var(--background-primary, #fff)',
+    border: '1px solid var(--background-modifier-border, #ddd)',
+    borderRadius: '12px',
+    width: '440px', maxWidth: '90vw',
+    maxHeight: '70vh',
+    display: 'flex', flexDirection: 'column',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+    overflow: 'hidden',
+  });
+  container.appendChild(modal);
+
+  const textSection = S(document.createElement('div'), { padding: '16px 20px 12px' });
+  const textLabel = textSection.createEl('label');
+  textLabel.textContent = '文本';
+  S(textLabel, { display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--text-normal, #333)', marginBottom: '8px' });
+
+  const input = textSection.createEl('input');
+  input.type = 'text';
+  input.placeholder = '输入文本';
+  S(input, {
+    width: '100%', padding: '10px 12px',
+    border: '1px solid var(--background-modifier-border, #ddd)', borderRadius: '6px',
+    background: 'var(--background-modifier-form-field, #fff)',
+    color: 'var(--text-normal, #333)', fontSize: '14px',
+    outline: 'none', boxSizing: 'border-box',
+  });
+  modal.appendChild(textSection);
+
+  const linkSection = S(document.createElement('div'), { padding: '0 20px 14px' });
+  const linkLabel = linkSection.createEl('label');
+  linkLabel.textContent = '外链';
+  S(linkLabel, { display: 'block', fontSize: '14px', fontWeight: '500', color: 'var(--text-normal, #333)', marginBottom: '8px' });
+
+  const listWrap = S(document.createElement('div'), {
+    border: '1px solid var(--interactive-accent, #4caf50)', borderRadius: '6px',
+    maxHeight: '260px', overflowY: 'auto',
+    background: 'var(--background-primary, #fff)',
+  });
+  const listEl = document.createElement('div');
+  listWrap.appendChild(listEl);
+  linkSection.appendChild(listWrap);
+  modal.appendChild(linkSection);
 
   const renderList = (filter: string) => {
     listEl.empty();
@@ -226,14 +265,27 @@ function showOutgoingLinkModal(univerAPI: FUniver, app: App): void {
       : files.filter(f => f.extension === 'md');
 
     filtered.slice(0, 50).forEach(file => {
-      const item = listEl.createDiv({ cls: 'sheet-free-outgoing-link-item' });
-      item.createSpan({ text: file.basename, cls: 'sheet-free-outgoing-link-item-name' });
-      item.createSpan({ text: file.path, cls: 'sheet-free-outgoing-link-item-path' });
+      const item = S(document.createElement('div'), {
+        padding: '10px 14px', cursor: 'pointer',
+        borderBottom: '1px solid var(--background-modifier-border, #eee)',
+        transition: 'background 0.1s',
+      });
+      item.addEventListener('mouseenter', () => { item.style.background = 'var(--background-modifier-hover, #f0f0f0)'; });
+      item.addEventListener('mouseleave', () => { item.style.background = ''; });
+
+      const nameEl = item.createSpan();
+      nameEl.textContent = file.basename;
+      S(nameEl, { display: 'block', fontSize: '15px', fontWeight: '500', color: 'var(--text-normal, #333)', lineHeight: '1.3' });
+
+      const pathEl = item.createSpan();
+      pathEl.textContent = file.path;
+      S(pathEl, { display: 'block', fontSize: '13px', color: 'var(--text-muted, #888)', lineHeight: '1.3', wordBreak: 'break-all' });
 
       item.addEventListener('click', () => {
         insertOutgoingLink(univerAPI, app, file);
         container.remove();
       });
+      listEl.appendChild(item);
     });
   };
 
@@ -241,7 +293,6 @@ function showOutgoingLinkModal(univerAPI: FUniver, app: App): void {
   renderList('');
 
   const handleClose = () => container.remove();
-  closeBtn.addEventListener('click', handleClose);
   container.addEventListener('click', (e) => {
     if (e.target === container) handleClose();
   });

@@ -14,6 +14,10 @@ const en: Record<string, string> = {
   ADD_OUTGOING_LINK: 'Add internal link',
   SEARCH_NOTES: 'Search notes...',
   EMBED_LINK: 'Generate embed link',
+  CHANGE_RENDER_MODE: 'Toggle render mode',
+  RENDER_MODE_DESKTOP: 'Desktop edit mode',
+  RENDER_MODE_MOBILE: 'Mobile preview mode',
+  PREVIEW_BADGE: '👁 Preview only',
 };
 
 export default en;

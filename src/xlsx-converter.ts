@@ -2,6 +2,32 @@ import type { IWorkbookData, ICellData, IRange, IStyleData } from '@univerjs/cor
 import { BooleanNumber, CellValueType, LocaleType } from '@univerjs/core';
 import * as XLSX from 'xlsx';
 
+const INDEXED_COLORS = [
+  '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
+  '#FFFF00', '#FF00FF', '#00FFFF', '#800000', '#008000',
+  '#000080', '#808000', '#800080', '#008080', '#C0C0C0',
+  '#808080', '#9999FF', '#993366', '#FFFFCC', '#CCFFFF',
+  '#660066', '#FF8080', '#0066CC', '#CCCCFF', '#000080',
+  '#FF00FF', '#FFFF00', '#00FFFF', '#800080', '#800000',
+  '#008080', '#0000FF', '#00CCFF', '#CCFFFF', '#CCFFCC', '#FFFF99', '#CC99FF', '#FFCC99', '#3366FF', '#33CCCC', '#99CC00', '#FF9900', '#FF6600',
+  '#666699', '#969696', '#003366', '#339966', '#003300',
+  '#333300', '#993300', '#993366', '#333399', '#333333',
+];
+
+function parseXlsxColor(colorObj: any): string | null {
+  if (!colorObj) return null;
+  if (colorObj.rgb) {
+    const raw = String(colorObj.rgb).trim();
+    const hex = raw.replace(/^#/, '');
+    if (/^[0-9A-Fa-f]{6}$/.test(hex)) return `#${hex}`;
+    if (/^[0-9A-Fa-f]{8}$/.test(hex)) return `#${hex.slice(-6)}`;
+  }
+  if (typeof colorObj.indexed === 'number' && INDEXED_COLORS[colorObj.indexed]) {
+    return INDEXED_COLORS[colorObj.indexed];
+  }
+  return null;
+}
+
 function generateStyleId(styles: Record<string, IStyleData>, style: IStyleData): string {
   const key = JSON.stringify(style);
   for (const [id, s] of Object.entries(styles)) {
@@ -51,6 +77,47 @@ export function xlsxToWorkbookData(buffer: ArrayBuffer, fileName: string): IWork
   const sheets: IWorkbookData['sheets'] = {};
   const sheetOrder: string[] = [];
   const styles: Record<string, IStyleData> = {};
+
+  const wbStyles = workbook.Styles as any;
+  const fonts: any[] = wbStyles?.Fonts || [];
+  const fills: any[] = wbStyles?.Fills || [];
+  const cellXfs: any[] = wbStyles?.CellXf || [];
+
+  function findFontColorByFill(cellFill: any): string | null {
+    if (!cellFill) return null;
+    const pt = String(cellFill.patternType || '');
+    const fgRaw = cellFill.fgColor?.rgb || '';
+    const bgRaw = cellFill.bgColor?.rgb || '';
+    const fgIndexed = cellFill.fgColor?.indexed;
+    const bgIndexed = cellFill.bgColor?.indexed;
+
+    let bestMatch: string | null = null;
+    for (const xf of cellXfs) {
+      const fontId = parseInt(String(xf.fontId ?? xf.fontid ?? -1));
+      const fillId = parseInt(String(xf.fillId ?? xf.fillid ?? -1));
+      if (fontId < 0 || fillId < 0 || !fonts[fontId] || !fills[fillId]) continue;
+
+      const fill = fills[fillId];
+      if (String(fill.patternType || '') !== pt) continue;
+
+      const ffg = fill.fgColor?.rgb || '';
+      const fbg = fill.bgColor?.rgb || '';
+      const ffgIdx = fill.fgColor?.indexed;
+      const fbgIdx = fill.bgColor?.indexed;
+
+      const fgOk = (!fgRaw && !fgIndexed) || ffg === fgRaw || (ffgIdx != null && ffgIdx === fgIndexed) ||
+        (fgRaw && ffg && fgRaw.replace(/^#/, '') === ffg.replace(/^#/, '').slice(-6));
+      const bgOk = (!bgRaw && !bgIndexed) || fbg === bgRaw || (fbgIdx != null && fbgIdx === bgIndexed) ||
+        (bgRaw && fbg && bgRaw.replace(/^#/, '') === fbg.replace(/^#/, '').slice(-6));
+
+      if (fgOk && bgOk) {
+        const fc = parseXlsxColor(fonts[fontId].color);
+        if (fc) { bestMatch = fc; break; }
+      }
+    }
+
+    return bestMatch;
+  }
 
   for (let i = 0; i < workbook.SheetNames.length; i++) {
     const sheetName = workbook.SheetNames[i];
@@ -112,34 +179,35 @@ export function xlsxToWorkbookData(buffer: ArrayBuffer, fileName: string): IWork
         cellValue.f = cell.f;
       }
 
+      if (cell.z) {
+        cellValue.n = { pattern: String(cell.z) };
+      }
+
       if (cell.s) {
         const styleData: IStyleData = {};
         let hasStyle = false;
 
-        if (cell.s.font) {
-          if (cell.s.font.bold) { styleData.bl = 1; hasStyle = true; }
-          if (cell.s.font.italic) { styleData.it = 1; hasStyle = true; }
-          if (cell.s.font.underline) { styleData.ul = { s: 1 }; hasStyle = true; }
-          if (cell.s.font.strike) { styleData.st = { s: 1 }; hasStyle = true; }
-          if (cell.s.font.sz) { styleData.fs = cell.s.font.sz; hasStyle = true; }
-          if (cell.s.font.name) { styleData.ff = cell.s.font.name; hasStyle = true; }
-          if (cell.s.font.color?.rgb) {
-            const rgb = cell.s.font.color.rgb;
-            styleData.cl = { rgb: `#${rgb.slice(-6)}` };
-            hasStyle = true;
-          }
+        if (cell.s.bold || cell.s.font?.bold) { styleData.bl = 1; hasStyle = true; }
+        if (cell.s.italic || cell.s.font?.italic) { styleData.it = 1; hasStyle = true; }
+        if (cell.s.underline || cell.s.font?.underline) { styleData.ul = { s: 1 }; hasStyle = true; }
+        if (cell.s.strike || cell.s.font?.strike) { styleData.st = { s: 1 }; hasStyle = true; }
+        if (cell.s.sz || cell.s.font?.sz) { styleData.fs = cell.s.sz || cell.s.font!.sz; hasStyle = true; }
+        if (cell.s.name || cell.s.font?.name) { styleData.ff = cell.s.name || cell.s.font!.name; hasStyle = true; }
+        let fontColorParsed = parseXlsxColor(cell.s.color || cell.s.font?.color);
+        if (!fontColorParsed && (cell.s.fgColor?.rgb || cell.s.bgColor?.rgb) && cell.s.patternType === 'solid') {
+          fontColorParsed = findFontColorByFill(cell.s);
         }
-        if (cell.s.fill?.fgColor?.rgb) {
-          const rgb = cell.s.fill.fgColor.rgb;
-          styleData.bg = { rgb: `#${rgb.slice(-6)}` };
-          hasStyle = true;
-        }
-        if (cell.s.alignment) {
-          if (cell.s.alignment.horizontal === 'center') { styleData.ht = 2; hasStyle = true; }
-          else if (cell.s.alignment.horizontal === 'right') { styleData.ht = 3; hasStyle = true; }
-          if (cell.s.alignment.vertical === 'center') { styleData.vt = 2; hasStyle = true; }
-          else if (cell.s.alignment.vertical === 'bottom') { styleData.vt = 3; hasStyle = true; }
-          if (cell.s.alignment.wrapText) { styleData.tb = 2; hasStyle = true; }
+        if (fontColorParsed) { styleData.cl = { rgb: fontColorParsed }; hasStyle = true; }
+        const bg = parseXlsxColor(cell.s.fgColor || cell.s.fill?.fgColor)
+          || parseXlsxColor(cell.s.bgColor || cell.s.fill?.bgColor);
+        if (bg) { styleData.bg = { rgb: bg }; hasStyle = true; }
+        const align = cell.s.alignment || (cell.s.horizontal || cell.s.vertical || cell.s.wrapText ? cell.s : null);
+        if (align) {
+          if (align.horizontal === 'center') { styleData.ht = 2; hasStyle = true; }
+          else if (align.horizontal === 'right') { styleData.ht = 3; hasStyle = true; }
+          if (align.vertical === 'center') { styleData.vt = 2; hasStyle = true; }
+          else if (align.vertical === 'bottom') { styleData.vt = 3; hasStyle = true; }
+          if (align.wrapText) { styleData.tb = 2; hasStyle = true; }
         }
 
         if (hasStyle) {
@@ -235,6 +303,10 @@ export function workbookDataToXlsx(data: IWorkbookData): ArrayBuffer {
           xlsxCell.t = 's';
         }
 
+        if (cell.n?.pattern) {
+          xlsxCell.z = cell.n.pattern;
+        }
+
         if (cell.s != null) {
           const styleData = typeof cell.s === 'string' ? styles[cell.s as string] : cell.s;
           if (styleData) {
@@ -262,6 +334,10 @@ export function workbookDataToXlsx(data: IWorkbookData): ArrayBuffer {
             if (styleData.vt === 2) alignment.vertical = 'center';
             else if (styleData.vt === 3) alignment.vertical = 'bottom';
             if (styleData.tb === 2) alignment.wrapText = true;
+
+            if (!xlsxCell.z && styleData.n?.pattern) {
+              xlsxCell.z = styleData.n.pattern;
+            }
 
             xlsxCell.s = {
               ...(Object.keys(font).length > 0 ? { font } : {}),
