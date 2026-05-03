@@ -1,95 +1,96 @@
 # obsidian-excel
 
-> Free Excel-like spreadsheet plugin for Obsidian, powered by [Univer](https://github.com/dream-num/univer).
+> 基于 [Univer](https://github.com/dream-num/univer) 的免费 Obsidian 电子表格插件。
 
-[![Version](https://img.shields.io/badge/version-26.5.2-blue)](https://github.com/nightfall-yl/obsidian-excel)
+[![Version](https://img.shields.io/badge/version-26.5.2-blue)](https://github.com/nightfall_yl/obsidian-excel)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-0.15.0%2B-purple)](https://obsidian.md)
+[English](README.en.md) | **中文**
 
-## Features
+## 功能特性
 
-### Core
+### 核心功能
 
-- **Full spreadsheet editor** — Create and edit multi-sheet workbooks with a familiar Excel-like UI
-- **Formula engine** — Complete formula support including SUM, AVERAGE, IF, VLOOKUP, and hundreds more
-- **Cell formatting** — Number formats, fonts, colors, borders, alignment, merge cells, freeze panes
-- **Conditional formatting** — Highlight cells based on rules (color scales, data bars, icon sets)
-- **Data validation** — Dropdown lists, number ranges, date constraints
-- **Sorting & filtering** — Sort rows/columns, filter by criteria
-- **Hyperlinks & notes** — Add clickable links and cell comments
-- **Thread comments** — Collaborative cell discussions
+- **完整表格编辑器** — 创建和编辑多 Sheet 工作簿，熟悉的 Excel 风格界面
+- **公式引擎** — 完整的公式支持，包括 SUM、AVERAGE、IF、VLOOKUP 等数百种函数
+- **单元格格式** — 数字格式、字体、颜色、边框、对齐方式、合并单元格、冻结窗格
+- **条件格式** — 基于规则高亮单元格（色阶、数据条、图标集）
+- **数据验证** — 下拉列表、数值范围、日期约束
+- **排序与筛选** — 按行/列排序，按条件筛选
+- **超链接与批注** — 添加可点击链接和单元格备注
+- **线程批注** — 单元格协作讨论
 
-### Import / Export
+### 导入 / 导出
 
-- **Import `.xlsx` files** — Open existing Excel workbooks directly
-- **Export to `.xlsx`** — Save your sheets as standard Excel files
-- **Embed links** — Reference other Obsidian notes as embedded content within cells
+- **导入 `.xlsx` 文件** — 直接打开现有的 Excel 工作簿
+- **导出为 `.xlsx`** — 将表格保存为标准 Excel 文件
+- **嵌入链接** — 在单元格内引用其他 Obsidian 笔记作为嵌入内容
 
-### Mobile Support
+### 移动端支持
 
-- **Preview mode** (default) — Read-only view optimized for mobile reading; no keyboard popup, smooth scrolling
-- **Edit mode** — Full editing capabilities with toolbar, sheet tabs, and cell input
-- **One-tap toggle** — Switch between preview and edit modes via the icon button in the top-right corner
-- **Sheet position memory** — When switching modes, the active sheet is preserved
+- **预览模式**（默认）— 只读视图，专为移动端阅读优化；不弹出输入法，流畅滚动
+- **编辑模式** — 完整编辑功能，包含工具栏、Sheet 切换标签、单元格输入
+- **一键切换** — 通过右上角图标按钮在预览/编辑模式间切换
+- **位置记忆** — 切换模式时自动保持当前活动的 Sheet
 
-### Integration
+### Obsidian 集成
 
-- **`.sheet.md` files** — Sheets are stored as Markdown files with structured data blocks
-- **Frontmatter detection** — Any Markdown file with `obsidian-excel: parsed` frontmatter auto-opens in Sheet View
-- **Ribbon & commands** — Create new sheets from the ribbon icon, command palette, or file context menu
-- **Dark mode** — Automatically follows Obsidian's theme setting
-- **Auto-save** — Changes are saved automatically after 5 seconds of inactivity
+- **`.sheet.md` 文件** — 表格以 Markdown 文件存储，内含结构化数据块
+- **Frontmatter 检测** — 任何带有 `obsidian-excel: parsed` frontmatter 的 Markdown 文件自动以表格视图打开
+- **功能区与命令** — 通过左侧图标、命令面板或文件右键菜单创建新表格
+- **暗色模式** — 自动跟随 Obsidian 主题设置
+- **自动保存** — 5 秒无操作后自动保存更改
 
-## Installation
+## 安装方法
 
-1. Download the latest release from [Releases](../../releases)
-2. Extract to your vault's `.obsidian/plugins/obsidian-excel/` folder
-3. Reload Obsidian (or enable the plugin in Settings → Community plugins)
+1. 从 [Releases](../../releases) 下载最新版本
+2. 解压到仓库的 `.obsidian/plugins/obsidian-excel/` 目录下
+3. 重载 Obsidian（或在 设置 → 社区插件 中启用）
 
-Or install manually:
+或手动安装：
 
 ```bash
-cd your-vault/.obsidian/plugins/
-git clone https://github.com/nightfall-yl/obsidian-excel.git
+cd 你的仓库/.obsidian/plugins/
+git clone https://github.com/nightfall_yl/obsidian-excel.git
 cd obsidian-excel
 npm install
 npm run build
 ```
 
-## Usage
+## 使用说明
 
-### Creating a New Sheet
+### 创建新表格
 
-- Click the 📊 **Spreadsheet** icon in the left ribbon
-- Use the command palette (`Ctrl/Cmd + P`) → "Create new spreadsheet"
-- Right-click any folder → "Create new spreadsheet"
+- 点击左侧功能区的 📊 **Spreadsheet** 图标
+- 使用命令面板（`Ctrl/Cmd + P`）→ "Create new spreadsheet"
+- 右键任意文件夹 → "Create new spreadsheet"
 
-### Opening an Existing Sheet
+### 打开已有表格
 
-- Click any `.sheet.md` file to open it in Sheet View
-- Files with `obsidian-excel: parsed` frontmatter open automatically
+- 点击任意 `.sheet.md` 文件即可在表格视图中打开
+- 包含 `obsidian-excel: parsed` frontmatter 的文件会自动打开
 
-### Importing XLSX
+### 导入 XLSX
 
-1. Open or create a sheet
-2. Click the **Import XLSX** button in the toolbar
-3. Select a `.xlsx` file to import
+1. 打开或创建一个表格
+2. 点击工具栏中的 **Import XLSX** 按钮
+3. 选择要导入的 `.xlsx` 文件
 
-### Exporting to XLSX
+### 导出为 XLSX
 
-1. Open a sheet
-2. Click the **Export XLSX** button in the toolbar
-3. The workbook is downloaded as a `.xlsx` file
+1. 打开一个表格
+2. 点击工具栏中的 **Export XLSX** 按钮
+3. 工作簿将下载为 `.xlsx` 文件
 
-### Mobile Mode Toggle
+### 移动端模式切换
 
-On mobile devices, use the **book/pencil icon** in the top-right corner to switch between:
-- 📖 **Preview mode** — Read-only, optimized for viewing
-- ✏️ **Edit mode** — Full editing with all features enabled
+在移动设备上，使用右上角的 **📖/✏️ 图标**切换模式：
+- 📖 **预览模式** — 只读，适合阅读浏览
+- ✏️ **编辑模式** — 全功能编辑，启用所有特性
 
-## File Format
+## 文件格式
 
-Sheets are stored as plain-text Markdown files:
+表格以纯文本 Markdown 文件存储：
 
 ```markdown
 ---
@@ -101,38 +102,38 @@ obsidian-excel: parsed
 ```
 ```
 
-This means sheets are fully compatible with Git version control and can be edited as text if needed.
+这意味着表格完全兼容 Git 版本控制，必要时也可以作为文本直接编辑。
 
-## Tech Stack
+## 技术栈
 
-| Component | Technology |
-|-----------|-----------|
-| Spreadsheet Engine | [Univer](https://univer.ai) 0.20.x |
-| Build Tool | Vite |
-| Language | TypeScript |
-| XLSX I/O | [SheetJS (xlsx)](https://sheetjs.com) |
+| 组件 | 技术 |
+|------|------|
+| 表格引擎 | [Univer](https://univer.ai) 0.20.x |
+| 构建工具 | Vite |
+| 编程语言 | TypeScript |
+| XLSX 读写 | [SheetJS (xlsx)](https://sheetjs.com) |
 
-## Development
+## 开发指南
 
 ```bash
-# Install dependencies
+# 安装依赖
 npm install
 
-# Build for production
+# 生产构建
 npm run build
 
-# Watch mode (development)
+# 监听模式（开发）
 npm run dev
 ```
 
-Built files are output to `dist/main.js` and `dist/style.css`.
+构建产物输出到 `dist/main.js` 和 `dist/style.css`。
 
-## Credits
+## 致谢
 
-- [Univer](https://github.com/dream-num/univer) — The underlying spreadsheet engine
-- [SheetJS](https://sheetjs.com) — XLSX import/export support
-- [Obsidian](https://obsidian.md) — The note-taking app that makes this possible
+- [Univer](https://github.com/dream-num/univer) — 底层表格引擎
+- [SheetJS](https://sheetjs.com) — XLSX 导入/导出支持
+- [Obsidian](https://obsidian.md) — 让这一切成为可能的笔记应用
 
-## License
+## 许可证
 
 [MIT](LICENSE)
