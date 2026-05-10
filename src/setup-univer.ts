@@ -12,7 +12,7 @@ import '@univerjs/sheets-thread-comment-ui/lib/index.css';
 import '@univerjs/sheets-hyper-link-ui/lib/index.css';
 import '@univerjs/sheets-note-ui/lib/index.css';
 
-import { IAuthzIoService, LocaleType, LogLevel, Tools, Univer, UserManagerService } from '@univerjs/core';
+import { IAuthzIoService, ICommandService, LocaleService, LocaleType, LogLevel, Tools, Univer, UserManagerService } from '@univerjs/core';
 import { FUniver } from '@univerjs/core/facade';
 import { defaultTheme } from '@univerjs/themes';
 import { MockAuthzService } from './MockAuthzService';
@@ -195,6 +195,42 @@ export function createUniverInstance(
   }
 
   const univerAPI = FUniver.newAPI(univer);
+
+  // Fix: rename new sheet to match locale when InsertSheetCommand executes
+  try {
+    const cmdInjector = univer.__getInjector();
+    const commandService = cmdInjector.get(ICommandService);
+    const localeService = cmdInjector.get(LocaleService);
+    commandService.onCommandExecuted((commandInfo) => {
+      if (commandInfo.id === 'sheet.command.insert-sheet') {
+        const correctPrefix = localeService.t('sheets.tabs.sheet');
+
+        setTimeout(() => {
+          try {
+            const activeWorkbook = univerAPI.getActiveWorkbook();
+            if (!activeWorkbook) return;
+            const activeSheet = activeWorkbook.getActiveSheet();
+            if (!activeSheet) return;
+            const currentName = activeSheet.getSheetName();
+
+            if (currentName.startsWith('Sheet')) {
+              // Find the next available number for the locale prefix
+              const existingSheets = activeWorkbook.getSheets();
+              const usedNumbers = new Set<number>();
+              for (const sheet of existingSheets) {
+                const m = sheet.getSheetName().match(new RegExp(`^${correctPrefix}(\\d+)$`));
+                if (m) usedNumbers.add(Number(m[1]));
+              }
+              let nextNum = 1;
+              while (usedNumbers.has(nextNum)) nextNum++;
+              activeSheet.setName(correctPrefix + nextNum);
+            }
+          } catch (_) { /* ignore */ }
+        }, 0);
+      }
+    });
+  } catch (_) { /* ignore */ }
+
   return { univerAPI, univer };
 }
 
@@ -250,7 +286,7 @@ function registerMobilePreviewPlugins(univer: Univer, container: string | HTMLEl
     container,
     contextMenu: false,
     header: false,
-    footer: false,
+    footer: true,
     toolbar: false,
   });
   univer.registerPlugin(UniverDocsUIPlugin);

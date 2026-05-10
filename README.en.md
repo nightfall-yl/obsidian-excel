@@ -2,10 +2,18 @@
 
 > Free Excel-like spreadsheet plugin for Obsidian, powered by [Univer](https://github.com/dream-num/univer).
 
-[![Version](https://img.shields.io/badge/version-26.5.2-blue)](https://github.com/nightfall_yl/obsidian-excel)
+[![Version](https://img.shields.io/badge/version-26.5.4-blue)](https://github.com/nightfall_yl/obsidian-excel)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-0.15.0%2B-purple)](https://obsidian.md)
 [**中文**](README.md) | English
+
+## Changelog
+
+### v26.5.3
+
+- **i18n: Sheet name locale fix** — New sheets now correctly follow the system language (Chinese displays "工作表1", English displays "Sheet1"). Sheets created via the "+" button on the sheet tab bar are also automatically numbered.
+- **UI: Formula bar alignment fix** — Fixed inconsistent vertical height between the Defined Name input and the formula editor in the formula bar, caused by mismatched `padding` values. All elements now align properly via flex centering.
+- **UI: Sheet bar spacing** — Added bottom padding to prevent the Univer native sheet bar from overlapping the Obsidian status bar, which previously obscured grid toggle and zoom controls.
 
 ## Features
 
@@ -61,7 +69,7 @@ npm run build
 
 ### Creating a New Sheet
 
-- Click the 📊 **Spreadsheet** icon in the left ribbon
+- Click the **Spreadsheet** icon in the left ribbon
 - Use the command palette (`Ctrl/Cmd + P`) → "Create new spreadsheet"
 - Right-click any folder → "Create new spreadsheet"
 
@@ -85,8 +93,8 @@ npm run build
 ### Mobile Mode Toggle
 
 On mobile devices, use the **book/pencil icon** in the top-right corner to switch between:
-- 📖 **Preview mode** — Read-only, optimized for viewing
-- ✏️ **Edit mode** — Full editing with all features enabled
+- **Preview mode** — Read-only, optimized for viewing
+- **Edit mode** — Full editing with all features enabled
 
 ## File Format
 
@@ -126,7 +134,7 @@ npm run build
 npm run dev
 ```
 
-Built files are output to `dist/main.js` and `dist/style.css`.
+Built files are output to `dist/main.js`, `dist/styles.css`, and `dist/manifest.json`, and are automatically copied back to the project root.
 
 ## Credits
 

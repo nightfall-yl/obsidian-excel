@@ -36,7 +36,10 @@ export class SheetView extends TextFileView {
     if (!this.file) return;
     this.data = data;
 
-    const workbookData = parseSheetFile(data, this.file.path) || createBlankSheetData(this.file.path);
+    const parsed = parseSheetFile(data, this.file.path);
+    const workbookData = (parsed && parsed.sheets && Object.keys(parsed.sheets).length > 0)
+      ? parsed
+      : createBlankSheetData(this.file.path);
     this.lastWorkbookData = workbookData;
 
     this.renderUniver(workbookData);

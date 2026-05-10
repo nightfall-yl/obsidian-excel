@@ -1,6 +1,7 @@
 import type { IWorkbookData } from '@univerjs/core';
 import { BooleanNumber, LocaleType } from '@univerjs/core';
 import { FRONTMATTER_KEY } from './constants';
+import { getObsidianLocale } from './setup-univer';
 
 export function parseSheetFile(content: string, filePath?: string): IWorkbookData | undefined {
   const headerRegex = /^---\r?\n([\s\S]*?)\r?\n---\s*/;
@@ -41,7 +42,7 @@ export function createBlankSheetData(filePath?: string): IWorkbookData {
     sheets: {
       'sheet-1': {
         id: 'sheet-1',
-        name: 'Sheet1',
+        name: getObsidianLocale() === LocaleType.ZH_CN ? '工作表1' : 'Sheet1',
         tabColor: '',
         hidden: BooleanNumber.FALSE,
         freeze: { xSplit: 0, ySplit: 0, startRow: 0, startColumn: 0 },
